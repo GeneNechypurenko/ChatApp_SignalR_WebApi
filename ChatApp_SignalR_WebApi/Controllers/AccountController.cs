@@ -37,13 +37,14 @@ namespace ChatApp_SignalR_WebApi.Controllers
 				return Unauthorized(new { Message = "Invalid username or password" });
 			}
 
-			// careate new user session -- to do
+			// -- to do careate new user session 
 			//await _userService.UpdateUserSessionAsync(user.Id, true);
 
 			return Ok(new { Message = $"Welcome to chat, {user.UserName}" });
 		}
 
-		//[HttpGet] -- to do
+		// -- to do
+		//[HttpGet] 
 		//public async Task<IActionResult> GetConnectedUsers()
 		//{
 		//	var users = await _userService.GetConnectedUsersAsync();
