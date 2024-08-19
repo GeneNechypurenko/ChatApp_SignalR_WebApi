@@ -40,21 +40,17 @@
 
         let isValid = true;
 
-        // Очистка предыдущих сообщений об ошибках
         document.querySelectorAll('.validation-message').forEach(span => span.textContent = '');
 
-        // Получение значений полей
         const signinUsername = document.getElementById('signin-username').value.trim();
         const signinPassword = document.getElementById('signin-password').value.trim();
         const signinConfirmation = document.getElementById('signin-confirmation').value.trim();
 
-        // Проверка поля имени пользователя
         if (signinUsername === '') {
             document.getElementById('signin-username-error').textContent = 'Username is required';
             isValid = false;
         }
 
-        // Проверка пароля
         if (signinPassword === '') {
             document.getElementById('signin-password-error').textContent = 'Password is required';
             isValid = false;
@@ -63,22 +59,19 @@
             isValid = false;
         }
 
-        // Проверка подтверждения пароля
         if (signinConfirmation !== signinPassword) {
             document.getElementById('signin-confirmation-error').textContent = 'Passwords do not match';
             isValid = false;
         }
 
-        // Если валидация не пройдена, прерываем отправку формы
         if (!isValid) {
             return;
         }
 
-        // Если валидация пройдена, отправляем форму
         const user = {
             userName: signinUsername,
             password: signinPassword,
-            passwordHash: '' // Используйте bcrypt для генерации хеша пароля на стороне сервера
+            passwordHash: ''
         };
 
         fetch('api/account/register', {
@@ -90,11 +83,71 @@
         })
             .then(response => response.json())
             .then(data => {
-                alert(data.message); // Сообщение об успешной регистрации
-                document.getElementById('signin-modal').style.display = 'none'; // Закрытие модального окна
+                alert(data.message);
+                signinModal.style.display = 'none';
             })
             .catch(error => {
                 console.error('Error:', error);
             });
     });
+
+
+    //---------------------------------------  USER LOGIN:
+
+    const loginSubmit = document.getElementById('login-submit');
+    loginSubmit.addEventListener('click', function (event) {
+        event.preventDefault();
+
+        let isValid = true;
+
+        document.querySelectorAll('.validation-message').forEach(el => el.textContent = '');
+
+        const loginUsername = document.getElementById('login-username').value.trim();
+        const loginPassword = document.getElementById('login-password').value.trim();
+
+        if (loginUsername === '') {
+            document.getElementById('login-username-error').textContent = 'Username is required';
+            isValid = false;
+        }
+
+        if (loginPassword === '') {
+            document.getElementById('login-password-error').textContent = 'Password is required';
+            isValid = false;
+        }
+
+        if (!isValid) {
+            return;
+        }
+
+        const loginData = {
+            UserName: loginUsername,
+            Password: loginPassword
+        };
+
+        fetch('api/account/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(loginData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().catch(() => {
+                        throw new Error('Invalid username or password');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message);
+                loginModal.style.display = 'none';
+                loginSigninContainer.style.display = 'none';
+                greetingLogoutContainer.style.display = '';
+            })
+            .catch(error => {
+                document.getElementById('login-password-error').textContent = error.message;
+            });
+    });
+
 });

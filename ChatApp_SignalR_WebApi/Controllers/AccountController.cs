@@ -23,21 +23,31 @@ namespace ChatApp_SignalR_WebApi.Controllers
 		}
 
 		[HttpPost("login")]
-		public async Task<IActionResult> Login(string username, string password)
+		public async Task<IActionResult> Login([FromBody] UserDTO loginDTO)
 		{
 			if (!ModelState.IsValid)
 			{
 				return BadRequest(ModelState);
 			}
-			await _userService.LoginUserAsync(username, password);
-			return Ok(new { Message = $"Wellcome to chat {username}" });
+
+			var user = await _userService.LoginUserAsync(loginDTO.UserName, loginDTO.Password);
+
+			if (user == null)
+			{
+				return Unauthorized(new { Message = "Invalid username or password" });
+			}
+
+			// careate new user session -- to do
+			//await _userService.UpdateUserSessionAsync(user.Id, true);
+
+			return Ok(new { Message = $"Welcome to chat, {user.UserName}" });
 		}
 
-		[HttpGet]
-		public async Task<IActionResult> GetConnectedUsers()
-		{
-			var users = await _userService.GetConnectedUsersAsync();
-			return Ok(users);
-		}
+		//[HttpGet] -- to do
+		//public async Task<IActionResult> GetConnectedUsers()
+		//{
+		//	var users = await _userService.GetConnectedUsersAsync();
+		//	return Ok(users);
+		//}
 	}
 }
