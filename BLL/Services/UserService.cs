@@ -6,68 +6,45 @@ using DAL.Repositories.Interfaces;
 
 namespace BLL.Services
 {
-	public class UserService : IChatService<UserDTO>
+	public class UserService : IUserService
 	{
 		public IUnitOfWork UnitOfWork { get; set; }
 
 		public UserService(IUnitOfWork unitOfWork) => UnitOfWork = unitOfWork;
 
-		public async Task<IEnumerable<UserDTO>> GetAllAsync()
+		public async Task<UserDTO?> LoginUserAsync(string username, string password)
 		{
-			var usersDTOList = new Mapper(new MapperConfiguration(config => config.CreateMap<User, UserDTO>()))
-			.Map<IEnumerable<User>, IEnumerable<UserDTO>>(await UnitOfWork.UserRepository.GetAllAsync());
+			var user = await UnitOfWork.UserRepository.GetUserAsync(username);
 
-			return usersDTOList;
-		}
-
-		public async Task<UserDTO> GetAsync(int id)
-		{
-			var user = await UnitOfWork.UserRepository.GetAsync(id);
-
-			var userDTO = new UserDTO
+			if (user != null && BCrypt.Net.BCrypt.Verify(password, user.Password))
 			{
-				UserName = user.UserName,
-				Password = user.Password,
-				PasswordHash = user.PasswordHash,
-				Messages = user.Messages,
-			};
-
-			return userDTO;
+				return new UserDTO
+				{
+					Id = user.Id,
+					UserName = user.UserName,
+				};
+			}
+			return null;
 		}
 
-		public async Task CreateAsync(UserDTO modelDTO)
+		public async Task RegisterUserAsync(UserDTO userDTO)
 		{
 			var user = new User
 			{
-				UserName = modelDTO.UserName,
-				Password = modelDTO.Password,
-				PasswordHash = modelDTO.PasswordHash,
-				Messages = new List<ChatMessage>(),
+				UserName = userDTO.UserName,
+				Password = BCrypt.Net.BCrypt.HashPassword(userDTO.Password),
 			};
 
-			await UnitOfWork.UserRepository.CreateAsync(user);
+			await UnitOfWork.UserRepository.CreateUserAsync(user);
 			await UnitOfWork.SaveAsync();
 		}
 
-		public async Task UpdateAsync(UserDTO modelDTO)
+		public async Task<IEnumerable<UserDTO>> GetConnectedUsersAsync()
 		{
-			var user = await UnitOfWork.UserRepository.GetAsync(modelDTO.Id);
+			var connectedUsers = new Mapper(new MapperConfiguration(config => config.CreateMap<User, UserDTO>()))
+				.Map<IEnumerable<User>, IEnumerable<UserDTO>>(await UnitOfWork.UserRepository.GetConectedUsersAsync());
 
-			if (user != null)
-			{
-				user.UserName = modelDTO.UserName;
-				user.Password = modelDTO.Password;
-				user.PasswordHash = modelDTO.PasswordHash;
-
-				UnitOfWork.UserRepository.Update(user);
-				await UnitOfWork.SaveAsync();
-			}
-		}
-
-		public async Task DeleteAsync(int id)
-		{
-			await UnitOfWork.UserRepository.DeleteAsync(id);
-			await UnitOfWork.SaveAsync();
+			return connectedUsers;
 		}
 	}
 }

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repositories
 {
-	public class UserChatSessionRepository : IRepository<UserChatSession>
+	public class UserChatSessionRepository
 	{
 		private readonly ApplicationDbContext _context;
 		public UserChatSessionRepository(ApplicationDbContext context)

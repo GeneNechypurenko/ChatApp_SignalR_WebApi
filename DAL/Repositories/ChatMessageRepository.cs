@@ -1,12 +1,10 @@
 ﻿using DAL.Data;
 using DAL.Models;
-using DAL.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
 
 namespace DAL.Repositories
 {
-	public class ChatMessageRepository : IRepository<ChatMessage>
+	public class ChatMessageRepository
 	{
 		private readonly ApplicationDbContext _context;
 		public ChatMessageRepository(ApplicationDbContext context)

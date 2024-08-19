@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repositories
 {
-	public class UserRepository : IRepository<User>
+	public class UserRepository : IUserRepository
 	{
 		private readonly ApplicationDbContext _context;
 
@@ -14,36 +14,27 @@ namespace DAL.Repositories
 			_context = context;
 		}
 
-		public async Task<IEnumerable<User>> GetAllAsync()
+		public async Task CreateUserAsync(User user)
 		{
-			return await _context.Users.ToListAsync();
+			await _context.Users.AddAsync(user);
 		}
 
-		public async Task<User> GetAsync(int id)
+		public async Task<IEnumerable<User>> GetConectedUsersAsync()
 		{
-			return await _context.Users.FindAsync(id) ?? throw new ArgumentNullException($"UserRepository with {id} not found");
+			var connectedUserIds = await _context.UsersChatSessions.Where(ucs => ucs.IsConnected).Select(ucs => ucs.UserId)
+				.Distinct().ToListAsync();
+			return await _context.Users.Where(u => connectedUserIds.Contains(u.Id)).ToListAsync();
 		}
 
-		public async Task<User> GetAsync(string name)
+		public async Task<User> GetUserAsync(int id)
 		{
-			return await _context.Users.Where(u => u.UserName == name).FirstOrDefaultAsync()
-				?? throw new ArgumentNullException($"UserRepository with {name} not found");
+			return await _context.Users.FindAsync(id) ?? throw new ArgumentException($"User with Id {id} not found", nameof(id));
 		}
 
-		public async Task CreateAsync(User entity)
+		public async Task<User> GetUserAsync(string username)
 		{
-			await _context.Users.AddAsync(entity);
-		}
-
-		public void Update(User entity)
-		{
-			_context.Users.Update(entity);
-		}
-
-		public async Task DeleteAsync(int id)
-		{
-			var user = await _context.Users.FindAsync(id);
-			if (user != null) _context.Users.Remove(user);
+			return await _context.Users.Where(u => u.UserName == username).FirstOrDefaultAsync() 
+				?? throw new ArgumentException($"User with {username} not found", nameof(username));
 		}
 	}
 }

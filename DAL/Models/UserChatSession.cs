@@ -7,6 +7,7 @@ namespace DAL.Models
 		public int Id { get; set; }
 		public string? LoginTime { get; set; }
 		public string? LogoutTime { get; set; }
+		public bool IsConnected { get; set; }
 		public int UserId { get; set; }
 		public User? User { get; set; }
 	}

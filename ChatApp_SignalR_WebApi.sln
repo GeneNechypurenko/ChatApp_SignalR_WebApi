@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.34928.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatApp_SignalR_WebApi", "ChatApp_SignalR_WebApi\ChatApp_SignalR_WebApi.csproj", "{0E650E8A-DE09-4B4A-AE7B-87A7572C6695}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatApp_SignalR_WebApi", "ChatApp_SignalR_WebApi\ChatApp_SignalR_WebApi.csproj", "{0E650E8A-DE09-4B4A-AE7B-87A7572C6695}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "DAL\DAL.csproj", "{18774FCF-73E2-4DDD-847F-35332FC706E2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DAL", "DAL\DAL.csproj", "{18774FCF-73E2-4DDD-847F-35332FC706E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BLL", "BLL\BLL.csproj", "{F0F4A2FA-ADD6-47BD-A525-6A3B3CFEAAAA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BLL", "BLL\BLL.csproj", "{F0F4A2FA-ADD6-47BD-A525-6A3B3CFEAAAA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
