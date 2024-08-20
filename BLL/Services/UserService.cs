@@ -38,13 +38,5 @@ namespace BLL.Services
 			await UnitOfWork.UserRepository.CreateUserAsync(user);
 			await UnitOfWork.SaveAsync();
 		}
-
-		public async Task<IEnumerable<UserDTO>> GetConnectedUsersAsync()
-		{
-			var connectedUsers = new Mapper(new MapperConfiguration(config => config.CreateMap<User, UserDTO>()))
-				.Map<IEnumerable<User>, IEnumerable<UserDTO>>(await UnitOfWork.UserRepository.GetConectedUsersAsync());
-
-			return connectedUsers;
-		}
 	}
 }

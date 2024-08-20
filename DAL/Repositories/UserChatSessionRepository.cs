@@ -5,37 +5,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repositories
 {
-	public class UserChatSessionRepository
+	public class UserChatSessionRepository : IUserChatSessionRepository
 	{
 		private readonly ApplicationDbContext _context;
 		public UserChatSessionRepository(ApplicationDbContext context)
 		{
 			_context = context;
 		}
-		public async Task CreateAsync(UserChatSession entity)
+
+		public async Task CreateNewSessionAsync(UserChatSession session)
 		{
-			await _context.AddAsync(entity);
+			await _context.UsersChatSessions.AddAsync(session);
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task<UserChatSession> GetCurrentSessionAsync(int userId)
 		{
-			var userChatSession = await _context.FindAsync<UserChatSession>(id);
-			if (userChatSession != null) _context.Update(userChatSession);
+			return await _context.UsersChatSessions.Where(x => x.UserId == userId && x.LogoutTime == null).FirstOrDefaultAsync();
 		}
 
-		public async Task<IEnumerable<UserChatSession>> GetAllAsync()
+		public void UpdateCurrentSession(UserChatSession session)
 		{
-			return await _context.UsersChatSessions.ToListAsync();
-		}
-
-		public async Task<UserChatSession> GetAsync(int id)
-		{
-			return await _context.UsersChatSessions.FindAsync(id) ?? throw new ArgumentNullException($"Session with {id} not found");
-		}
-
-		public void Update(UserChatSession entity)
-		{
-			_context.UsersChatSessions.Update(entity);
+			_context.UsersChatSessions.Update(session);
 		}
 	}
 }

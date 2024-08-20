@@ -30,17 +30,18 @@ namespace ChatApp_SignalR_WebApi.Controllers
 				return BadRequest(ModelState);
 			}
 
-			var user = await _userService.LoginUserAsync(loginDTO.UserName, loginDTO.Password);
-
-			if (user == null)
+			try
+			{
+				var user = await _userService.LoginUserAsync(loginDTO.UserName, loginDTO.Password);
+				return Ok(user);
+			}
+			catch
 			{
 				return Unauthorized(new { Message = "Invalid username or password" });
 			}
 
-			// -- to do careate new user session 
+			// -- to do create new user session 
 			//await _userService.UpdateUserSessionAsync(user.Id, true);
-
-			return Ok(new { Message = $"Welcome to chat, {user.UserName}" });
 		}
 
 		// -- to do

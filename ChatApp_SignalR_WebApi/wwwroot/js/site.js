@@ -133,21 +133,20 @@
         })
             .then(response => {
                 if (!response.ok) {
-                    return response.json().catch(() => {
-                        throw new Error('Invalid username or password');
+                    return response.json().then(data => {
+                        throw new Error(data.message);
                     });
                 }
                 return response.json();
             })
             .then(data => {
-                alert(data.message);
                 loginModal.style.display = 'none';
                 loginSigninContainer.style.display = 'none';
                 greetingLogoutContainer.style.display = '';
+                document.getElementById('greeting').textContent = 'Welcome, ' + data.userName;
             })
             .catch(error => {
                 document.getElementById('login-password-error').textContent = error.message;
             });
     });
-
 });
