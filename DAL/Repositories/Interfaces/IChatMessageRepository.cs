@@ -5,5 +5,6 @@ namespace DAL.Repositories.Interfaces
     public interface IChatMessageRepository
     {
         Task CreateMessageAsync(ChatMessage message);
+        Task<IEnumerable<ChatMessage>> GetAllMessagesAsync();
     }
 }

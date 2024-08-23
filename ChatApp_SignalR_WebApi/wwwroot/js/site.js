@@ -9,8 +9,6 @@
     const usersContent = document.getElementById('users-content');
     const chatContent = document.getElementById('chat-content');
 
-    const hubConnection = new signalR.HubConnectionBuilder().withUrl("/chat").build(); // <-- Hub Connection
-
     greetingLogoutContainer.style.display = 'none';
     loginSigninContainer.style.display = '';
     loginModal.style.display = 'none';
@@ -33,6 +31,10 @@
     document.getElementById('signin-close').addEventListener('click', () => {
         signinModal.style.display = 'none';
     });
+
+    // ------------------------------------HUB CONNECTION-----------------------------------
+
+    const hubConnection = new signalR.HubConnectionBuilder().withUrl("/chat").build(); 
 
     // ------------------------------------REGISTRATION-------------------------------------
 
@@ -144,10 +146,10 @@
 
     //----------------------------------HUB CALLBACKS---------------------------
     async function connectToChatHub(username) {
-        hubConnection.on("Connected", function (connectId, username, allUsers) {
-            document.getElementById('session-id').value = connectId;
+        hubConnection.on("Connected", function (connectionId, username, allUsers) {
+            document.getElementById('session-id').value = connectionId;
             document.getElementById('username').value = username;
-
+            usersContent.innerHTML = '';
             allUsers.forEach(user => {
                 const newUser = document.createElement('p');
                 newUser.textContent = user.username;
@@ -156,33 +158,36 @@
             });
 
             const userConnectedMessage = document.createElement('p');
-            userConnectedMessage.textContent = `${username} joined chat ${formatDateTime(new Date())}`;
+            userConnectedMessage.textContent = `${username} joined chat`;
             userConnectedMessage.classList.add('message');
             chatContent.appendChild(userConnectedMessage);
         });
 
         hubConnection.on("NewUserConnected", function (connectionId, username) {
+
             const newUser = document.createElement('p');
             newUser.textContent = username;
             newUser.classList.add('user');
             usersContent.appendChild(newUser);
 
             const userConnectedMessage = document.createElement('p');
-            userConnectedMessage.textContent = `${username} joined chat ${formatDateTime(new Date())}`;
+            userConnectedMessage.textContent = `${username} joined chat`;
             userConnectedMessage.classList.add('message');
             chatContent.appendChild(userConnectedMessage);
         });
 
-        hubConnection.on("AddMessage", function (username, message) {
+        hubConnection.on("AddMessage", function (username, message, timestamp) {
+
             const newMessage = document.createElement('p');
             newMessage.classList.add('message');
-            newMessage.textContent = `${username}: ${message} ${formatDateTime(new Date())}`;
+            newMessage.textContent = `${username}: ${message} ${timestamp}`;
             chatContent.appendChild(newMessage);
         });
 
         hubConnection.on("UserDisconnected", function (connectionId, username) {
+
             const userDisconnectedMessage = document.createElement('p');
-            userDisconnectedMessage.textContent = `${username} left the chat ${formatDateTime(new Date())}`;
+            userDisconnectedMessage.textContent = `${username} left the chat`;
             userDisconnectedMessage.classList.add('message');
             chatContent.appendChild(userDisconnectedMessage);
 
@@ -202,20 +207,7 @@
         }
     }
 
-    function formatDateTime(date) {
-        const options = {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        };
-        return date.toLocaleString('en-GB', options);
-    }
-
-    //-------------------------------------SEND MESSAGE-----------------------
-
+    // ---------------------------MESSAGES SENDING-----------------
     inputMessage.addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -238,14 +230,44 @@
                 .catch(error => console.error('Error sending message:', error));
         }
     }
-    //---------------------------------------------------------------
 
-    document.getElementById('logout-button').addEventListener('click', async () => { ///// <---------- передалать!!!!!!
+    // -----------------------------LOG OUT-------------------------------------------
+
+    document.getElementById('logout-button').addEventListener('click', async () => {
         try {
+            await hubConnection.invoke("Disconnect");
+
+            greetingLogoutContainer.style.display = 'none';
+            loginSigninContainer.style.display = '';
+            inputMessage.disabled = true;
+            sendMessage.disabled = true;
+            sendMessage.classList.remove('button');
+            sendMessage.classList.add('button-disabled');
+
             await hubConnection.stop();
             console.log('Disconnected successfully');
         } catch (err) {
             console.error('Error disconnecting:', err);
         }
     });
+
+    //------------------------------------CHAT HISTRY-------------------------------------
+    async function loadChatHistory() {
+        try {
+            const response = await fetch('/api/chat/history');
+            if (!response.ok) {
+                throw new Error('Network response error');
+            }
+            const messages = await response.json();
+            messages.forEach(message => {
+                const messageElement = document.createElement('p');
+                messageElement.classList.add('message');
+                messageElement.textContent = `${message.userName}: ${message.message} ${message.timestamp}`;
+                chatContent.appendChild(messageElement);
+            });
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+        }
+    }
+    loadChatHistory();
 });

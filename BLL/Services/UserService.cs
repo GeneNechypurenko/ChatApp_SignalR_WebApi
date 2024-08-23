@@ -2,6 +2,7 @@
 using BLL.ModelsDTO;
 using BLL.Services.Interfaces;
 using DAL.Models;
+using DAL.Repositories;
 using DAL.Repositories.Interfaces;
 
 namespace BLL.Services
@@ -38,5 +39,15 @@ namespace BLL.Services
 			await UnitOfWork.UserRepository.CreateUserAsync(user);
 			await UnitOfWork.SaveAsync();
 		}
-	}
+
+        public async Task<UserDTO> GetUserByUsernameAsync(string username)
+        {
+            var user = await UnitOfWork.UserRepository.GetUserAsync(username);
+            return new UserDTO
+            {
+                Id = user.Id,
+                UserName = user.UserName
+            };
+        }
+    }
 }

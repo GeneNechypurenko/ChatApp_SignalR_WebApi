@@ -6,5 +6,6 @@ namespace BLL.Services.Interfaces
 	{
 		Task<UserDTO?> LoginUserAsync(string username, string password);
 		Task RegisterUserAsync(UserDTO userDTO);
-	}
+        Task<UserDTO> GetUserByUsernameAsync(string username);
+    }
 }

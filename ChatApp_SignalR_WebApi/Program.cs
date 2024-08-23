@@ -14,7 +14,6 @@ namespace ChatApp_SignalR_WebApi
             builder.Services.AddApplicationDbContext(builder.Configuration.GetConnectionString("DefaultConnection")!);
             builder.Services.AddUnitOfWorkService();
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IUserChatSessionService, UserChatSessionService>();
             builder.Services.AddScoped<IChatMessageService, ChatMessageService>();
 
             builder.Services.AddControllers();
