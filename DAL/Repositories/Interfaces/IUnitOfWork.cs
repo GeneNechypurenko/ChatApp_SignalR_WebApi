@@ -6,6 +6,7 @@ namespace DAL.Repositories.Interfaces
 	{
 		IUserRepository UserRepository { get; }
 		IUserChatSessionRepository UserChatSessionRepository { get; }
+		IChatMessageRepository ChatMessageRepository { get; }
 		Task SaveAsync();
 	}
 }

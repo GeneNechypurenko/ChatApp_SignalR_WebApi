@@ -22,7 +22,21 @@ namespace BLL.Services
 			await UnitOfWork.SaveAsync();
 		}
 
-		public async Task<UserChatSessionDTO?> GetCurrentSessionAsync(int userId)
+        public async Task StartNewSessionAsync(string username)
+        {
+			var user = await UnitOfWork.UserRepository.GetUserAsync(username);
+
+			var session = new UserChatSession
+			{
+				UserId = user.Id,
+				LoginTime = DateTime.Now.ToString("o")
+			};
+
+			await UnitOfWork.UserChatSessionRepository.CreateNewSessionAsync(session);
+			await UnitOfWork.SaveAsync();
+        }
+
+        public async Task<UserChatSessionDTO?> GetCurrentSessionAsync(int userId)
 		{
 			var session = await UnitOfWork.UserChatSessionRepository.GetCurrentSessionAsync(userId);
 			if (session != null)
@@ -38,7 +52,24 @@ namespace BLL.Services
 			return null;
 		}
 
-		public async Task EndSessionAsync(int userId)
+        public async Task<UserChatSessionDTO?> GetCurrentSessionAsync(string username)
+        {
+			var user = await UnitOfWork.UserRepository.GetUserAsync(username);
+            var session = await UnitOfWork.UserChatSessionRepository.GetCurrentSessionAsync(user.Id);
+            if (session != null)
+            {
+                var currentSessionDTO = new UserChatSessionDTO
+                {
+                    UserId = session.UserId,
+                    LoginTime = session.LoginTime,
+                    LogoutTime = session.LogoutTime
+                };
+                return currentSessionDTO;
+            }
+            return null;
+        }
+
+        public async Task EndSessionAsync(int userId)
 		{
 			var session = await UnitOfWork.UserChatSessionRepository.GetCurrentSessionAsync(userId);
 			if (session != null)
@@ -48,5 +79,17 @@ namespace BLL.Services
 				await UnitOfWork.SaveAsync();
 			}
 		}
-	}
+
+        public async Task EndSessionAsync(string username)
+        {
+            var user = await UnitOfWork.UserRepository.GetUserAsync(username);
+			var session = await UnitOfWork.UserChatSessionRepository.GetCurrentSessionAsync(user.Id);
+            if (session != null)
+            {
+                session.LogoutTime = DateTime.Now.ToString("o");
+                UnitOfWork.UserChatSessionRepository.UpdateCurrentSession(session);
+                await UnitOfWork.SaveAsync();
+            }
+        }
+    }
 }

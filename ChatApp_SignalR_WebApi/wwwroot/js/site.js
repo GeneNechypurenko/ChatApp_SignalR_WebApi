@@ -4,7 +4,7 @@
     greetingLogoutContainer.style.display = 'none';
 
     const loginSigninContainer = document.getElementById('login-signin-container');
-    loginSigninContainer.style.display = ''
+    loginSigninContainer.style.display = '';
 
     const loginModal = document.getElementById('login-modal');
     loginModal.style.display = 'none';
@@ -22,6 +22,8 @@
         signinModal.style.display = '';
     });
 
+    const logoutButton = document.getElementById('logout-button');
+
     const loginClose = document.getElementById('login-close');
     loginClose.addEventListener('click', function () {
         loginModal.style.display = 'none';
@@ -31,6 +33,19 @@
     signinClose.addEventListener('click', function () {
         signinModal.style.display = 'none';
     });
+
+    const usersContent = document.getElementById('users-content');
+    const chatContent = document.getElementById('chat-content');
+
+    const inputMessage = document.getElementById('input-message');
+    inputMessage.disabled = true;
+
+    const sendMessage = document.getElementById('send-message');
+    sendMessage.disabled = true;
+
+    //---------------------------------------  HUB CONNECTION:
+
+    const connection = new signalR.HubConnectionBuilder().withUrl("/chat").build();
 
     //---------------------------------------  USER REGISTRATION:
 
@@ -91,11 +106,10 @@
             });
     });
 
-
     //---------------------------------------  USER LOGIN:
 
     const loginSubmit = document.getElementById('login-submit');
-    loginSubmit.addEventListener('click', function (event) {
+    loginSubmit.addEventListener('click', async function (event) {
         event.preventDefault();
 
         let isValid = true;
@@ -119,34 +133,112 @@
             return;
         }
 
-        const loginData = {
-            UserName: loginUsername,
-            Password: loginPassword
-        };
+        try {
+            const response = await fetch('/api/account/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userName: loginUsername, password: loginPassword })
+            });
 
-        fetch('api/account/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(loginData)
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.message);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
+            if (response.ok) {
+
+                const user = await response.json();
+
                 loginModal.style.display = 'none';
                 loginSigninContainer.style.display = 'none';
                 greetingLogoutContainer.style.display = '';
-                document.getElementById('greeting').textContent = 'Welcome, ' + data.userName;
-            })
-            .catch(error => {
+                document.getElementById('greeting').textContent = 'Welcome, ' + user.userName;
+
+                inputMessage.disabled = false;
+                sendMessage.disabled = false;
+                sendMessage.classList.remove('button-disabled');
+                sendMessage.classList.add('button');
+
+                await connectToChatHub(user.userName);
+
+            } else {
+                const error = await response.json();
                 document.getElementById('login-password-error').textContent = error.message;
-            });
+            }
+        } catch (error) {
+            console.error("Error: ", error);
+        }
     });
+
+    async function connectToChatHub(username) {
+
+        connection.on("Connected", (userSessionId, username) => {
+
+            console.log(`User ${username} connected with session ID ${userSessionId}`);
+
+            const newUser = document.createElement('p');
+            newUser.textContent = username;
+            newUser.classList.add('user');
+            usersContent.appendChild(newUser);
+
+            const userConnectedMessage = document.createElement('p');
+            userConnectedMessage.textContent = `${username} joined chat`;
+            userConnectedMessage.classList.add('message');
+            chatContent.appendChild(userConnectedMessage);
+
+            document.getElementById('session-id').value = userSessionId;
+            document.getElementById('username').value = username;
+        });
+
+        connection.on("NewUserConnected", (connectionId, username) => {
+
+            console.log(`New user connected: ${username} (${connectionId})`);
+
+            const newUser = document.createElement('p');
+            newUser.textContent = username;
+            newUser.classList.add('user');
+            usersContent.appendChild(newUser);
+
+            const userConnectedMessage = document.createElement('p');
+            userConnectedMessage.textContent = `${username} joined chat`;
+            userConnectedMessage.classList.add('message');
+            chatContent.appendChild(userConnectedMessage);
+        });
+
+        connection.on("AddMessage", (username, message) => {
+
+            console.log(`Message from ${username}: ${message}`);
+
+            const newMessage = document.createElement('p');
+            newMessage.classList.add('message');
+            newMessage.textContent = `${username}: ${message}`;
+            chatContent.appendChild(newMessage);
+        });
+
+        await connection.start();
+        await connection.invoke("Connect", username);
+    }
+
+    //---------------------------------------  SEND MESSAGE:
+
+    inputMessage.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            sendChatMessage();
+        }
+    });
+
+    sendMessage.addEventListener('click', function () {
+        sendChatMessage();
+    });
+
+    function sendChatMessage() {
+        const message = inputMessage.value.trim();
+        if (message) {
+            const username = document.getElementById('username').value;
+            const sessionId = document.getElementById('session-id').value;
+
+            connection.invoke("Send", username, message)
+                .then(() => {
+                    inputMessage.value = '';
+                    console.log(`Message sent: ${message}`);
+                })
+                .catch(error => console.error('Error sending message:', error));
+        }
+    } 
 });

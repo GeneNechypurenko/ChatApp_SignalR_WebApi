@@ -1,30 +1,34 @@
-
 using BLL.Infrastructure;
-using BLL.ModelsDTO;
 using BLL.Services;
 using BLL.Services.Interfaces;
+using ChatApp_SignalR_WebApi.Hubs;
 
 namespace ChatApp_SignalR_WebApi
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			var builder = WebApplication.CreateBuilder(args);
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-			builder.Services.AddApplicationDbContext(builder.Configuration.GetConnectionString("DefaultConnection")!);
-			builder.Services.AddUnitOfWorkService();
-			builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddApplicationDbContext(builder.Configuration.GetConnectionString("DefaultConnection")!);
+            builder.Services.AddUnitOfWorkService();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IUserChatSessionService, UserChatSessionService>();
+            builder.Services.AddScoped<IChatMessageService, ChatMessageService>();
 
-			builder.Services.AddControllers();
+            builder.Services.AddControllers();
+            builder.Services.AddSignalR();
 
-			var app = builder.Build();
+            var app = builder.Build();
 
-			app.UseStaticFiles();
-			app.UseHttpsRedirection();
-			app.MapControllers();
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+            app.UseHttpsRedirection();
+            app.MapControllers();
+            app.MapHub<ChatHub>("/chat");
 
-			app.Run();
-		}
-	}
+            app.Run();
+        }
+    }
 }

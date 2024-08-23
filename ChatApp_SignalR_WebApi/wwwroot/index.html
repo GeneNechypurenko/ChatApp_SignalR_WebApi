@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Monofett&family=Monoton&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chango&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
@@ -100,13 +101,28 @@
     <!-- **************** -->
     <!-- CHAT BODY -->
     <section id="chat-body">
-        <aside id="chat-session"></aside>
-        <aside id="users-list"></aside>
+        <aside id="chat-session">
+            <div id="chat-content"></div>
+        </aside>
+        <aside id="users-list">
+            <div id="users-content"></div>
+        </aside>
     </section>
     <!-- **************** -->
     <!-- USER MESSAGE PANEL -->
-    <section id="user-panel"></section>
+    <!-- USER MESSAGE PANEL -->
+    <section id="user-panel">
+        <input type="hidden" id="session-id" value="" />
+        <input type="hidden" id="username" value="" />
+        <div class="textbox">
+            <input id="input-message" placeholder="Enter your message here..." />
+        </div>
+        <div class="send">
+            <button id="send-message" class="button-disabled">Send Message</button>
+        </div>
+    </section>
     <!-- **************** -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
     <script src="js/site.js" defer></script>
 </body>
 </html>
