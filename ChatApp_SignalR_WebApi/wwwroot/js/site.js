@@ -1,60 +1,45 @@
 ﻿document.addEventListener('DOMContentLoaded', function () {
 
     const greetingLogoutContainer = document.getElementById('greeting-logout-container');
-    greetingLogoutContainer.style.display = 'none';
-
     const loginSigninContainer = document.getElementById('login-signin-container');
-    loginSigninContainer.style.display = '';
-
     const loginModal = document.getElementById('login-modal');
-    loginModal.style.display = 'none';
-
     const signinModal = document.getElementById('signin-modal');
-    signinModal.style.display = 'none';
-
-    const openLoginModal = document.getElementById('open-login-modal');
-    openLoginModal.addEventListener('click', function () {
-        loginModal.style.display = '';
-    });
-
-    const openSigninModal = document.getElementById('open-signin-modal');
-    openSigninModal.addEventListener('click', function () {
-        signinModal.style.display = '';
-    });
-
-    const logoutButton = document.getElementById('logout-button');
-
-    const loginClose = document.getElementById('login-close');
-    loginClose.addEventListener('click', function () {
-        loginModal.style.display = 'none';
-    });
-
-    const signinClose = document.getElementById('signin-close');
-    signinClose.addEventListener('click', function () {
-        signinModal.style.display = 'none';
-    });
-
+    const inputMessage = document.getElementById('input-message');
+    const sendMessage = document.getElementById('send-message');
     const usersContent = document.getElementById('users-content');
     const chatContent = document.getElementById('chat-content');
 
-    const inputMessage = document.getElementById('input-message');
-    inputMessage.disabled = true;
+    const hubConnection = new signalR.HubConnectionBuilder().withUrl("/chat").build(); // <-- Hub Connection
 
-    const sendMessage = document.getElementById('send-message');
+    greetingLogoutContainer.style.display = 'none';
+    loginSigninContainer.style.display = '';
+    loginModal.style.display = 'none';
+    signinModal.style.display = 'none';
+    inputMessage.disabled = true;
     sendMessage.disabled = true;
 
-    //---------------------------------------  HUB CONNECTION:
+    document.getElementById('open-login-modal').addEventListener('click', () => {
+        loginModal.style.display = '';
+    });
 
-    const connection = new signalR.HubConnectionBuilder().withUrl("/chat").build();
+    document.getElementById('open-signin-modal').addEventListener('click', () => {
+        signinModal.style.display = '';
+    });
 
-    //---------------------------------------  USER REGISTRATION:
+    document.getElementById('login-close').addEventListener('click', () => {
+        loginModal.style.display = 'none';
+    });
 
-    const signinSubmit = document.getElementById('signin-submit');
-    signinSubmit.addEventListener('click', function (event) {
+    document.getElementById('signin-close').addEventListener('click', () => {
+        signinModal.style.display = 'none';
+    });
+
+    // ------------------------------------REGISTRATION-------------------------------------
+
+    document.getElementById('signin-submit').addEventListener('click', function (event) {
         event.preventDefault();
 
         let isValid = true;
-
         document.querySelectorAll('.validation-message').forEach(span => span.textContent = '');
 
         const signinUsername = document.getElementById('signin-username').value.trim();
@@ -79,9 +64,7 @@
             isValid = false;
         }
 
-        if (!isValid) {
-            return;
-        }
+        if (!isValid) return;
 
         const user = {
             userName: signinUsername,
@@ -106,14 +89,11 @@
             });
     });
 
-    //---------------------------------------  USER LOGIN:
-
-    const loginSubmit = document.getElementById('login-submit');
-    loginSubmit.addEventListener('click', async function (event) {
+    // ------------------------------------LOGIN-------------------------------------
+    document.getElementById('login-submit').addEventListener('click', async function (event) {
         event.preventDefault();
 
         let isValid = true;
-
         document.querySelectorAll('.validation-message').forEach(el => el.textContent = '');
 
         const loginUsername = document.getElementById('login-username').value.trim();
@@ -129,9 +109,7 @@
             isValid = false;
         }
 
-        if (!isValid) {
-            return;
-        }
+        if (!isValid) return;
 
         try {
             const response = await fetch('/api/account/login', {
@@ -141,7 +119,6 @@
             });
 
             if (response.ok) {
-
                 const user = await response.json();
 
                 loginModal.style.display = 'none';
@@ -165,56 +142,79 @@
         }
     });
 
+    //----------------------------------HUB CALLBACKS---------------------------
     async function connectToChatHub(username) {
-
-        connection.on("Connected", (userSessionId, username) => {
-
-            console.log(`User ${username} connected with session ID ${userSessionId}`);
-
-            const newUser = document.createElement('p');
-            newUser.textContent = username;
-            newUser.classList.add('user');
-            usersContent.appendChild(newUser);
-
-            const userConnectedMessage = document.createElement('p');
-            userConnectedMessage.textContent = `${username} joined chat`;
-            userConnectedMessage.classList.add('message');
-            chatContent.appendChild(userConnectedMessage);
-
-            document.getElementById('session-id').value = userSessionId;
+        hubConnection.on("Connected", function (connectId, username, allUsers) {
+            document.getElementById('session-id').value = connectId;
             document.getElementById('username').value = username;
+
+            allUsers.forEach(user => {
+                const newUser = document.createElement('p');
+                newUser.textContent = user.username;
+                newUser.classList.add('user');
+                usersContent.appendChild(newUser);
+            });
+
+            const userConnectedMessage = document.createElement('p');
+            userConnectedMessage.textContent = `${username} joined chat ${formatDateTime(new Date())}`;
+            userConnectedMessage.classList.add('message');
+            chatContent.appendChild(userConnectedMessage);
         });
 
-        connection.on("NewUserConnected", (connectionId, username) => {
-
-            console.log(`New user connected: ${username} (${connectionId})`);
-
+        hubConnection.on("NewUserConnected", function (connectionId, username) {
             const newUser = document.createElement('p');
             newUser.textContent = username;
             newUser.classList.add('user');
             usersContent.appendChild(newUser);
 
             const userConnectedMessage = document.createElement('p');
-            userConnectedMessage.textContent = `${username} joined chat`;
+            userConnectedMessage.textContent = `${username} joined chat ${formatDateTime(new Date())}`;
             userConnectedMessage.classList.add('message');
             chatContent.appendChild(userConnectedMessage);
         });
 
-        connection.on("AddMessage", (username, message) => {
-
-            console.log(`Message from ${username}: ${message}`);
-
+        hubConnection.on("AddMessage", function (username, message) {
             const newMessage = document.createElement('p');
             newMessage.classList.add('message');
-            newMessage.textContent = `${username}: ${message}`;
+            newMessage.textContent = `${username}: ${message} ${formatDateTime(new Date())}`;
             chatContent.appendChild(newMessage);
         });
 
-        await connection.start();
-        await connection.invoke("Connect", username);
+        hubConnection.on("UserDisconnected", function (connectionId, username) {
+            const userDisconnectedMessage = document.createElement('p');
+            userDisconnectedMessage.textContent = `${username} left the chat ${formatDateTime(new Date())}`;
+            userDisconnectedMessage.classList.add('message');
+            chatContent.appendChild(userDisconnectedMessage);
+
+            const userElements = document.querySelectorAll('.user');
+            userElements.forEach(userElement => {
+                if (userElement.textContent === username) {
+                    userElement.remove();
+                }
+            });
+        });
+
+        try {
+            await hubConnection.start();
+            await hubConnection.invoke("Connect", username);
+        } catch (error) {
+            console.error('Error starting connection:', error);
+        }
     }
 
-    //---------------------------------------  SEND MESSAGE:
+    function formatDateTime(date) {
+        const options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        return date.toLocaleString('en-GB', options);
+    }
+
+    //-------------------------------------SEND MESSAGE-----------------------
 
     inputMessage.addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
@@ -231,14 +231,21 @@
         const message = inputMessage.value.trim();
         if (message) {
             const username = document.getElementById('username').value;
-            const sessionId = document.getElementById('session-id').value;
-
-            connection.invoke("Send", username, message)
+            hubConnection.invoke("Send", username, message)
                 .then(() => {
                     inputMessage.value = '';
-                    console.log(`Message sent: ${message}`);
                 })
                 .catch(error => console.error('Error sending message:', error));
         }
-    } 
+    }
+    //---------------------------------------------------------------
+
+    document.getElementById('logout-button').addEventListener('click', async () => { ///// <---------- передалать!!!!!!
+        try {
+            await hubConnection.stop();
+            console.log('Disconnected successfully');
+        } catch (err) {
+            console.error('Error disconnecting:', err);
+        }
+    });
 });

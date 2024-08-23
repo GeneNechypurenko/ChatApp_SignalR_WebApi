@@ -49,19 +49,19 @@ namespace ChatApp_SignalR_WebApi.Controllers
             }
         }
 
-        //[HttpPost("logout")]
-        //public async Task<IActionResult> Logout([FromBody] UserDTO logoutDTO)
-        //{
-        //    try
-        //    {
-        //        await _chatHubContext.Clients.User(logoutDTO.UserName).SendAsync("Disconnect");
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] UserDTO logoutDTO)
+        {
+            try
+            {
+                await _chatHubContext.Clients.User(logoutDTO.UserName).SendAsync("Disconnect");
 
-        //        return Ok(new { Message = "Logout successful" });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { Message = ex.Message });
-        //    }
-        //}
+                return Ok(new { Message = "Logout successful" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
     }
 }
